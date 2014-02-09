@@ -121,18 +121,28 @@ Server.prototype.listen = function(port, host) {
 Server.prototype._onAccept = function(acceptInfo) {
 	var self = this;
 	socket.accept(this._socketId, self._onAccept.bind(self));
-	console.log('accept::', acceptInfo);
+	// console.log('accept::', acceptInfo);
 
 	this._readSocket(acceptInfo.socketId, function (requestString) {
 		chrome.socket.getInfo(acceptInfo.socketId, function (result) {
 			var req = new Request(acceptInfo.socketId, result, requestString);
 			var res = new Response(acceptInfo.socketId);
-
+			if (req.getHeader("Connection") == "keep-alive") {
+				// result == boolean.
+				self._enableKeepAlive(acceptInfo.socketId, function (result) {
+					// console.log("KeepAlive", acceptInfo.socketId, result);
+					self._readSocket(acceptInfo.socketId, function (requestString) {
+						console.log("KeepAlive _readSocket", requestString);
+					});
+				});
+			}
+			console.log(acceptInfo.socketId, req._headers);
 			// Do standard Response setup here
 			res.setHeader('Content-Type', 'text/plain');
 
 			self.emit('request', req, res);
-		})
+			self.emit(req._path, req, res);
+		});
 	});
 };
 
@@ -163,6 +173,39 @@ var Request = function (socketId, info, requestString) {
 
 	if (requestString) {
 		this._parseString(requestString);
+	}
+}
+
+Request.prototype.isStreaming = function () {
+	return this.getHeader("range") != null;
+}
+
+Request.prototype.getRange = function (cb) {
+	if (this.isStreaming()) {
+		var range = this.getHeader("range");
+		range = range.split("bytes=")[1];
+		range = range.split("-");
+		var rangeOne = parseInt(range[0]);
+		var rangeTwo = parseInt(range[1]);
+		cb(rangeOne ? rangeOne : 0, rangeTwo ? rangeTwo : 0);
+	} else {
+		cb(null, null);
+	}
+}
+
+Request.prototype.setChunkSize = function (size) {
+	this._chunkSize = size;
+}
+
+Request.prototype.getChunkSize = function (cb) {
+	if (this.isStreaming()) {
+		if (this._chunkSize) {
+			cb(this._chunkSize);
+		} else {
+			this.getRange(function (start, end) {
+				cb(end-start);
+			});
+		}
 	}
 }
 
@@ -210,7 +253,7 @@ Response.prototype.write = function(data, cb) {
 	}
 	
 	socket.write(this._socketId, outputBuffer, function(writeInfo) {
-		console.log('write writeInfo', writeInfo);
+		// console.log('write writeInfo', writeInfo);
 		cb && cb();
 	});
 };
@@ -242,6 +285,10 @@ Response.prototype.redirect = function(url) {
 	this.end();
 };
 
+Response.prototype.setStatusCode = function(code) {
+	this._status = code;
+};
+
 Response.prototype._sendHeaders = function() {
 	this.write('HTTP/1.1 ' + this._status + ' ' +  STATUS_CODES[this._status] + "\n" + this._headers.toString() + '\n\n' );
 	this._headersSent = true;
@@ -253,7 +300,6 @@ Response.prototype.setHeader = function(key, value) {
 
 var Headers = function () {
 	this._headers = {};
-	this._headers
 }
 Headers.prototype.setHeader = function(key, value) {
 	this._headers[key.toLowerCase()] = value;
@@ -279,7 +325,7 @@ Headers.prototype.toString = function() {
 		}
 	}
 
-	console.log('headerToString', array);
+	// console.log('headerToString', array);
 	return array.join('\n');
 };
 
