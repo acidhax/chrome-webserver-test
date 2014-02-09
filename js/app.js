@@ -3,7 +3,7 @@ var someText = document.getElementById('some-text');
 var server = new Server();
 server.listen(5556, '127.0.0.1');
 
-server.on('request', function(req, res) {
+server.on('/', function(req, res) {
 	res.setHeader('Content-Type', 'text/html');
 	res.send('<html><head></head><body><video src="http://localhost:5556/video.mp4"></body></html>');
 });
