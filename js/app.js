@@ -1,9 +1,11 @@
 var someText = document.getElementById('some-text');
 var fileEl = document.getElementById('file');
 var filesMap = {};
+var file;
 fileEl.onchange = function (e) {
 	var files = e.target.files;
 	for(var i = 0; i < files.length; i++) {
+		file = files[i];
 		var path = files[i].webkitRelativePath;
 		if (path && path.indexOf("/")>=0) {
 			filesMap[path.substr(path.indexOf("/"))] = files[i];
@@ -22,5 +24,5 @@ server.on('/', function(req, res) {
 
 server.on('/video.mp4', function(req, res) {
 	// req.setChunkSize(10000);
-	res.stream(req, filesMap[Object.keys(filesMap)[0]]);
+	res.stream(req, file);
 });
