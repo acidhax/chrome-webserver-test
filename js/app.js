@@ -17,23 +17,24 @@ fileEl.onchange = function (e) {
 chrome.socket.getNetworkList(function (results) {
 	var iplist = [];
 	results.forEach(function (result) {
-		var regex = new RegExp("^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
-		if (regex.test(result.address)) {
-			var button = document.createElement('button');
-			button.onclick = function() {
-				listener(result.address);
-			}
-			button.textContent = result.address;
-			iplist.push(button);
-		}
+		// var regex = new RegExp("^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
+		// if (regex.test(result.address)) {
+		// 	var button = document.createElement('button');
+		// 	button.onclick = function() {
+		// 		listener(result.address);
+		// 	}
+		// 	button.textContent = result.address;
+		// 	iplist.push(button);
+		// }
+		listener(result.address);
 	});
-	if (iplist.length == 1) {
-		iplist[0].onclick();
-	} else {
-		iplist.forEach(function (button) {
-			document.body.appendChild(button);
-		})
-	}
+	// if (iplist.length == 1) {
+	// 	iplist[0].onclick();
+	// } else {
+	// 	iplist.forEach(function (button) {
+	// 		document.body.appendChild(button);
+	// 	})
+	// }
 });
 
 
