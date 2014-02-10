@@ -16,7 +16,12 @@ fileEl.onchange = function (e) {
 }
 chrome.socket.getNetworkList(function (results) {
 	results.forEach(function (result) {
-		listener(result.address);
+		var button = document.createElement('button');
+		button.onclick = function() {
+			listener(result.address);
+		}
+		button.textContent = result.address;
+		document.body.appendChild(button);
 	});
 });
 
