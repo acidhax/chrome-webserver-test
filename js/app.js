@@ -15,16 +15,31 @@ fileEl.onchange = function (e) {
 	}
 }
 chrome.socket.getNetworkList(function (results) {
+	var iplist = [];
 	results.forEach(function (result) {
-		console.log(result);
-		listener(result.address);
+		var regex = new RegExp("^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
+		if (regex.test(result.address)) {
+			var button = document.createElement('button');
+			button.onclick = function() {
+				listener(result.address);
+			}
+			button.textContent = result.address;
+			iplist.push(button);
+		}
 	});
+	if (iplist.length == 1) {
+		iplist[0].onclick();
+	} else {
+		iplist.forEach(function (button) {
+			document.body.appendChild(button);
+		})
+	}
 });
 
 
 function listener (host) {
 	var server = new Server();
-	server.listen(5556, '127.0.0.1');
+	server.listen(5556, host);
 
 	server.on('/', function(req, res) {
 		res.setHeader('Content-Type', 'text/html');
