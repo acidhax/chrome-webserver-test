@@ -14,15 +14,24 @@ fileEl.onchange = function (e) {
 		}
 	}
 }
-var server = new Server();
-server.listen(5556, '127.0.0.1');
-
-server.on('/', function(req, res) {
-	res.setHeader('Content-Type', 'text/html');
-	res.send('<html><head></head><body><video src="http://localhost:5556/video.mp4"></body></html>');
+chrome.socket.getNetworkList(function (results) {
+	results.forEach(function (result) {
+		listener(result.address);
+	});
 });
 
-server.on('/video.mp4', function(req, res) {
-	// req.setChunkSize(10000);
-	res.stream(req, file);
-});
+
+function listener (host) {
+	var server = new Server();
+	server.listen(5556, '127.0.0.1');
+
+	server.on('/', function(req, res) {
+		res.setHeader('Content-Type', 'text/html');
+		res.send('<html><head></head><body><video src="http://localhost:5556/video.mp4"></body></html>');
+	});
+
+	server.on('/video.mp4', function(req, res) {
+		// req.setChunkSize(10000);
+		res.stream(req, file);
+	});
+}
