@@ -16,6 +16,7 @@ fileEl.onchange = function (e) {
 }
 chrome.socket.getNetworkList(function (results) {
 	results.forEach(function (result) {
+		console.log(result);
 		listener(result.address);
 	});
 });
