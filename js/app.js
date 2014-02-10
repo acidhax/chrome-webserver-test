@@ -1,5 +1,17 @@
 var someText = document.getElementById('some-text');
-
+var fileEl = document.getElementById('file');
+var filesMap = {};
+fileEl.onchange = function (e) {
+	var files = e.target.files;
+	for(var i = 0; i < files.length; i++) {
+		var path = files[i].webkitRelativePath;
+		if (path && path.indexOf("/")>=0) {
+			filesMap[path.substr(path.indexOf("/"))] = files[i];
+		} else {
+			filesMap["/"+(files[i].fileName || files[i].name)] = files[i];
+		}
+	}
+}
 var server = new Server();
 server.listen(5556, '127.0.0.1');
 
@@ -9,19 +21,6 @@ server.on('/', function(req, res) {
 });
 
 server.on('/video.mp4', function(req, res) {
-	res.setHeader('Content-Type', 'video/mp4');
-	res.setHeader('Content-Length', '1000000');
-	res.setHeader('Accept-Ranges', 'bytes');
-	if (req.isStreaming()) {
-		req.getRange(function (start, end) {
-			console.log("getRange", start, end);
-			res.setStatusCode(206);
-			res.setHeader("Content-Range", "bytes startbyte-endbyte/1000000"); // Should match content-length? Also use byte-byte/* for unknown lengths.
-			req.getChunkSize(function (size) {
-				if (size == 0) {
-
-				}
-			});
-		});
-	}
+	// req.setChunkSize(10000);
+	res.stream(req, filesMap[Object.keys(filesMap)[0]]);
 });
